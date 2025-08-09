@@ -37,7 +37,7 @@ A modern PySide6 GUI to compile your Python scripts with PyInstaller or Nuitka. 
 - Help & compliance
   - Concise bilingual help dialog with license links and notices
 - UI/UX
-  - Centralized global stylesheet at `ui/style.qss` (current theme: Divine Blue Light — deeper blue)
+  - Centralized global stylesheet at `ui/style.qss` (current theme: Ivory Luxury)
   - Inline styles removed from the `.ui` to improve maintainability
   - Windows icon support for executables
 - Internationalization
@@ -82,7 +82,7 @@ Notes
 
 
 ## Theming (Style)
-- Current theme: "Divine Blue Light (Luxe Pro, deeper blue)" accents
+- Current theme: "Ivory Luxury" — a light, refined theme (ivory/soft gold accents)
 - The global stylesheet is at `ui/style.qss`
   - You can tweak colors/spacing and restart the app to apply your custom look
 - The app clears inline styles from the `.ui` at startup so the global QSS fully applies
@@ -136,7 +136,7 @@ PyCompiler_Pro++/
 ├─ LICENSE.txt
 ├─ ui/
 │  ├─ ui_design.ui         # Qt Designer layout
-│  └─ style.qss            # global stylesheet (Divine Blue Light)
+│  └─ style.qss            # global stylesheet (Ivory Luxury)
 ├─ logo/
 │  └─ sidebar_logo.png     # sidebar logo (if present)
 └─ utils/
