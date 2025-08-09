@@ -56,7 +56,7 @@ cd PyCompiler_Pro++
 python -m venv venv
 # Windows
 venv\Scripts\activate
-# Linux/macOS
+# Linux
 source venv/bin/activate
 
 # 3) Install tool dependencies
