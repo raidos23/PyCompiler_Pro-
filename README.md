@@ -45,7 +45,9 @@ A modern PySide6 GUI to compile your Python scripts with PyInstaller or Nuitka. 
 
 
 ## Quick Start
-Requirements: Python 3.9+
+Requirements: Python 3.9+ (ensure Python is installed on your machine and available in PATH).
+
+Quick tip: On Windows, simply run run.ps1; on Linux, run ./run.sh.
 
 ```bash
 # 1) Clone the repository
