@@ -2,25 +2,26 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>PyCompiler Pro++</title>
+  <title>PyCompiler Pro++ | Ivory Luxury Edition</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="PyCompiler Pro++ - Compilateur Python haut de gamme, élégance ivoire et performance réunies.">
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@400;500&family=Great+Vibes&display=swap" rel="stylesheet">
   <style>
     :root {
-      --ivory: #f8f6f2;
-      --ivory-dark: #eceae4;
-      --gold: #c9b037;
-      --gold-gradient: linear-gradient(90deg, #e6dbac 0%, #c9b037 55%, #fffbe6 100%);
-      --luxury-dark: #23211a;
-      --luxury-accent: #b8a47e;
-      --luxury-border: #ece5d1;
-      --shadow: 0 6px 30px 0 rgba(200,190,150,0.15), 0 1.5px 0 var(--gold);
+      --ivory: #f9f8f4;
+      --ivory-dark: #ebe9e4;
+      --ivory-soft: #f5f3ee;
+      --accent: #d4cec3; /* beige clair chic */
+      --accent-dark: #b2aca3; /* accent plus profond */
+      --luxury-dark: #2a2926; /* texte foncé élégant */
+      --luxury-border: #e0ddd7;
+      --shadow: 0 6px 30px 0 rgba(180, 170, 150, 0.15);
     }
     body {
       min-height: 100vh;
       margin: 0;
-      background: linear-gradient(120deg, var(--ivory) 0%, #f9f7f2 100%);
+      background: linear-gradient(120deg, var(--ivory) 0%, #faf9f6 100%);
       font-family: 'Roboto', Arial, sans-serif;
       color: var(--luxury-dark);
     }
@@ -30,7 +31,7 @@
       padding: 3.5rem 1rem 1rem 1rem;
     }
     .card {
-      background: linear-gradient(120deg, #fffdf7 60%, #f7f4e6 100%);
+      background: linear-gradient(120deg, #ffffff 60%, var(--ivory-soft) 100%);
       border-radius: 2.3rem;
       border: 1.7px solid var(--luxury-border);
       box-shadow: var(--shadow);
@@ -39,48 +40,57 @@
       position: relative;
       overflow: hidden;
       z-index: 2;
+      transition: all 0.25s ease-in-out;
+    }
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 40px rgba(178, 172, 163, 0.25);
     }
     .brand {
       font-family: 'Great Vibes', cursive;
       font-size: 3.1rem;
       font-weight: 700;
-      color: var(--gold);
+      color: var(--accent-dark);
       margin-bottom: 0.05em;
       letter-spacing: 2.5px;
-      text-shadow: 0 2px 20px #f3e9bf60, 0 1.5px 0 #b8a47e;
+      text-shadow: 0 2px 14px rgba(178, 172, 163, 0.3);
     }
-    .gold-bar {
+    .ivory-bar {
       width: 85px;
       height: 5px;
-      background: var(--gold-gradient);
+      background: linear-gradient(90deg, var(--ivory-dark) 0%, var(--accent) 100%);
       border-radius: 3px;
       margin: 0.65em auto 1.1em auto;
-      box-shadow: 0 1px 14px #b8a47e55;
+      box-shadow: 0 1px 14px rgba(178, 172, 163, 0.2);
+      transition: width 0.3s ease;
+    }
+    .card:hover .ivory-bar {
+      width: 110px;
     }
     .subtitle {
       font-size: 1.22rem;
-      color: var(--luxury-accent);
+      color: var(--accent-dark);
       margin-bottom: 1.5em;
       font-family: 'Roboto', sans-serif;
       font-style: italic;
-      text-shadow: 0 1px 8px #ece5d1;
+      text-shadow: 0 1px 8px var(--ivory-soft);
     }
     .decorative-sep {
       width: 44px;
       margin: 1.1em auto 2em auto;
       border: none;
-      border-top: 2.5px dotted var(--gold);
+      border-top: 2.5px dotted var(--accent);
       opacity: 0.7;
     }
     h3 {
       font-family: 'Playfair Display', serif;
-      color: var(--gold);
+      color: var(--accent-dark);
       font-size: 1.5em;
       margin-top: 1.1em;
       margin-bottom: 1em;
       letter-spacing: 1.2px;
       text-align: center;
-      text-shadow: 0 1px 12px #f3e9bf22;
+      text-shadow: 0 1px 12px rgba(178, 172, 163, 0.15);
     }
     .feature-list {
       margin-bottom: 2em;
@@ -100,22 +110,18 @@
       left: 0;
       top: 0.13em;
       font-size: 1.25em;
-      color: var(--gold);
-      filter: drop-shadow(0 2px 8px #f9eec488);
+      color: var(--accent);
+      filter: drop-shadow(0 2px 8px rgba(178, 172, 163, 0.25));
     }
     .github-btn {
-      background: var(--gold-gradient);
+      background: linear-gradient(90deg, var(--ivory-soft) 0%, var(--ivory) 100%);
       color: var(--luxury-dark);
       font-family: 'Playfair Display', serif;
       font-weight: bold;
-      border: 1.8px solid var(--gold);
+      border: 1.8px solid var(--accent);
       border-radius: 2em;
-      transition: 
-        box-shadow 0.18s, 
-        background 0.18s, 
-        color 0.18s,
-        transform 0.15s;
-      box-shadow: 0 2px 17px #e8e0c077;
+      transition: all 0.18s ease-in-out;
+      box-shadow: 0 2px 17px rgba(178, 172, 163, 0.2);
       padding: 0.77em 2.9em;
       font-size: 1.17em;
       letter-spacing: 1.1px;
@@ -127,57 +133,57 @@
       z-index: 2;
     }
     .github-btn:hover, .github-btn:focus {
-      background: linear-gradient(90deg, #fffbe6 30%, #f7e1a7 100%);
-      color: var(--gold);
-      box-shadow: 0 6px 30px #b8a47e44, 0 1.5px 0 var(--gold);
-      border-color: var(--gold);
+      background: linear-gradient(90deg, var(--ivory) 0%, var(--ivory-dark) 100%);
+      color: var(--accent-dark);
+      box-shadow: 0 6px 30px rgba(178, 172, 163, 0.25);
+      border-color: var(--accent-dark);
       transform: translateY(-2px) scale(1.03);
       text-decoration: none;
     }
     .about-section {
       margin-top: 2.8em;
-      background: linear-gradient(120deg, #fffdf7 85%, #f6ecd7 100%);
+      background: linear-gradient(120deg, #ffffff 85%, var(--ivory-soft) 100%);
       border: 1.3px solid var(--luxury-border);
       border-radius: 1.2rem;
       padding: 1.75em 1.3em 1.15em 1.3em;
-      box-shadow: 0 1.5px 13px #f7ebc044;
+      box-shadow: 0 1.5px 13px rgba(178, 172, 163, 0.15);
       font-size: 1.08em;
       z-index: 1;
       position: relative;
     }
     .about-section h4 {
       font-family: 'Playfair Display', serif;
-      color: var(--gold);
+      color: var(--accent-dark);
       margin-bottom: 0.85em;
       font-size: 1.17em;
       letter-spacing: 0.5px;
     }
     .about-section a {
-      color: var(--gold);
+      color: var(--accent-dark);
       text-decoration: underline dotted;
       font-weight: 500;
     }
     footer {
       margin-top: 55px;
       text-align: center;
-      color: #b9ae8e;
+      color: var(--accent);
       font-size: 1.07rem;
       background: none;
       font-family: 'Roboto', sans-serif;
     }
     footer a {
-      color: var(--gold);
+      color: var(--accent-dark);
       text-decoration: underline;
     }
     hr {
       border: none;
-      border-top: 1.5px solid #ece5d1;
+      border-top: 1.5px solid var(--luxury-border);
       margin: 1.7em 0;
       opacity: 0.7;
     }
     @media (max-width: 600px) {
       .container { padding: 1em 0.2em; }
-      .brand { font-size: 1.7rem; }
+      .brand { font-size: 2rem; }
       .card, .about-section { padding: 1em 0.6em; }
       h3 { font-size: 1.06em; }
     }
@@ -188,8 +194,8 @@
     <div class="card shadow-lg">
       <div class="text-center">
         <div class="brand mb-1">PyCompiler Pro++</div>
-        <div class="gold-bar"></div>
-        <div class="subtitle">L'excellence Python, élégance et puissance réunies.</div>
+        <div class="ivory-bar"></div>
+        <div class="subtitle">L'excellence Python, élégance et performance réunies.</div>
       </div>
       <hr class="decorative-sep">
       <h3 class="mt-4 mb-3">✨ Fonctionnalités clés</h3>
@@ -215,7 +221,7 @@
     </div>
     <footer class="mt-5">
       <hr>
-      <p>&copy; 2025 PyCompiler Pro++ • Luxury Edition &bull; Par <a href="https://github.com/raidos23">raidos23</a></p>
+      <p>&copy; 2025 PyCompiler Pro++ • Ivory Luxury Edition &bull; Par <a href="https://github.com/raidos23">raidos23</a></p>
     </footer>
   </div>
 </body>
