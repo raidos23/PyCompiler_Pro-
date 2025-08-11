@@ -168,7 +168,7 @@ PyCompiler_Pro++/
 
 ## License
 - PyCompiler Pro++ is released under **GPL-3.0**: https://www.gnu.org/licenses/gpl-3.0.html
-- © 2025 PyCompiler_Pro++ by Samuel Amen AGUE a 15 years old developer. 
+- © 2025 PyCompiler_Pro++ by Samuel Amen AGUE, a 15 years old developer. 
 
 ---
 For questions, suggestions, or bug reports, open an issue in the repository. Happy compiling!
