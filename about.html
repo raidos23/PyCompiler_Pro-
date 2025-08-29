@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" content="#0b1e18" />
+  <title>PyCompiler Pro++ (ARK++) — Deep Dive</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    /* High-tech green theme */
+    :root {
+      --bg1: #06120e;
+      --bg2: #0b1e18;
+      --panel: rgba(10, 18, 16, 0.6);
+      --stroke: rgba(46, 255, 142, 0.30);
+      --accent: #2eff8e;
+      --accent-2: #27e06d;
+      --text: #eaffe9;
+      --muted: #b3ffd4;
+      --soft-shadow: 0 20px 60px rgba(0, 40, 20, 0.45);
+      --glow: 0 0 0 1px rgba(46,255,142,0.18), 0 12px 40px rgba(46,255,142,0.25);
+      --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+
+    body {
+      margin: 0;
+      font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      color: var(--text);
+      background: radial-gradient(1200px 600px at 10% 0%, #092a20, transparent),
+                  radial-gradient(900px 600px at 90% 0%, #071f18, transparent),
+                  linear-gradient(120deg, var(--bg1), var(--bg2) 50%, var(--bg1) 100%);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      line-height: 1.65;
+    }
+
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .topbar {
+      position: sticky; top: 0; z-index: 50;
+      backdrop-filter: blur(12px) saturate(140%);
+      -webkit-backdrop-filter: blur(12px) saturate(140%);
+      background: linear-gradient(90deg, rgba(46,255,142,.10), rgba(39,224,109,.08));
+      border-bottom: 1px solid var(--stroke);
+    }
+    .topbar-inner {
+      max-width: 1100px; margin: 0 auto; padding: 10px 16px;
+      display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    }
+    .brand {
+      font-family: 'Orbitron', 'Inter', system-ui, sans-serif;
+      letter-spacing: .08em; text-transform: uppercase; font-weight: 700;
+      text-shadow: 0 0 18px rgba(46,255,142,.22);
+    }
+    .chip {
+      border: 1px solid var(--stroke); border-radius: 999px; padding: 6px 10px;
+      background: linear-gradient(180deg, rgba(10,18,16,.65), rgba(10,18,16,.45));
+      color: var(--muted); font-size: 13px;
+    }
+
+    .hero {
+      display: block; max-width: 1100px; margin: 18px auto 8px auto; padding: 0 16px;
+    }
+    .hero-figure {
+      display: block; width: 100%; border-radius: 18px; overflow: hidden;
+      border: 1px solid var(--stroke); box-shadow: 0 10px 40px rgba(0, 50, 40, .45), inset 0 0 0 1px rgba(46,255,142,.08);
+      transition: transform .25s ease, box-shadow .25s ease;
+      background: #091410;
+    }
+    .hero-figure:hover { transform: translateY(-2px); box-shadow: 0 18px 60px rgba(0, 60, 45, .55), 0 0 0 1px rgba(46,255,142,.25) inset; }
+    .hero-figure img { display: block; width: 100%; height: auto; }
+
+    .layout {
+      max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 280px 1fr; gap: 20px; padding: 18px 16px 40px 16px;
+    }
+
+    nav.toc {
+      position: sticky; top: 64px; align-self: start;
+      background: var(--panel); border: 1px solid var(--stroke); border-radius: 14px; box-shadow: var(--soft-shadow);
+      padding: 14px; max-height: calc(100vh - 88px); overflow: auto;
+    }
+    .toc h3 { margin: 4px 0 10px 0; font-size: 14px; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
+    .toc ul { list-style: none; padding: 0; margin: 0; }
+    .toc li { margin: 6px 0; }
+    .toc a { color: var(--text); opacity: .9; }
+    .toc a:hover { color: var(--accent); }
+
+    main.article {
+      background: var(--panel); border: 1px solid var(--stroke); border-radius: 14px; box-shadow: var(--soft-shadow);
+      padding: 18px 18px 28px 18px; overflow: hidden;
+    }
+
+    section { padding: 8px 0 2px 0; }
+    section + section { border-top: 1px dashed rgba(46,255,142,.20); margin-top: 10px; padding-top: 18px; }
+
+    h1, h2, h3 { color: var(--text); }
+    h1 { font-family: 'Orbitron', 'Inter', sans-serif; text-transform: uppercase; letter-spacing: .06em; font-size: 28px; margin: 6px 0 12px 0; }
+    h2 { font-size: 20px; margin: 18px 0 10px 0; }
+    h3 { font-size: 16px; margin: 14px 0 8px 0; color: #d9ffe9; }
+
+    .meta { display: flex; flex-wrap: wrap; gap: 10px; margin: 6px 0 14px 0; color: var(--muted); font-size: 14px; }
+
+    p { margin: 10px 0; }
+    ul { margin: 10px 0 10px 18px; }
+    li { margin: 4px 0; }
+
+    code, pre { font-family: var(--mono); }
+    code { background: rgba(46,255,142,.08); padding: 2px 6px; border-radius: 6px; border: 1px solid rgba(46,255,142,.18); }
+    pre {
+      background: #0a1713; border: 1px solid rgba(46,255,142,.25); border-radius: 12px; padding: 12px; overflow: auto;
+      box-shadow: inset 0 0 0 1px rgba(46,255,142,.08);
+    }
+
+    .kbd { font-family: var(--mono); border: 1px solid rgba(46,255,142,.35); border-bottom-width: 2px; padding: 2px 6px; border-radius: 6px; background: #0d1c17; }
+
+    .notice {
+      border: 1px solid rgba(46,255,142,.35); border-radius: 12px; padding: 10px 12px; background: linear-gradient(180deg, rgba(10,18,16,.6), rgba(10,18,16,.45));
+      box-shadow: var(--glow); color: var(--muted);
+    }
+
+    footer.page {
+      max-width: 1100px; margin: 24px auto 60px auto; padding: 0 16px; color: #baffdf; text-align: center; font-size: 13px;
+    }
+
+    @media (max-width: 980px) {
+      .layout { grid-template-columns: 1fr; }
+      nav.toc { position: relative; top: 0; max-height: none; }
+    }
+
+    /* Reduced motion & focus */
+    @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 8px; }
+  </style>
+</head>
+<body>
+  <header class="topbar" role="banner">
+    <div class="topbar-inner">
+      <div class="brand">PyCompiler Pro++ (ARK++)</div>
+      <span class="chip">Open source • GPL v3</span>
+      <a href="index.html" class="chip" title="Back to home">← Home</a>
+      <a href="https://github.com/raidos23/PyCompiler_Pro-" class="chip" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+    </div>
+  </header>
+
+  <div class="hero">
+    <figure class="hero-figure">
+      <img src="Github_Page_Data/splash.png" alt="PyCompiler ARK++ splash" loading="eager" decoding="async" fetchpriority="high" />
+    </figure>
+  </div>
+
+  <div class="layout">
+    <nav class="toc" aria-label="Table of contents">
+      <h3>Contents</h3>
+      <ul>
+        <li><a href="#overview">Overview</a></li>
+        <li><a href="#vision">Vision and the Revolution</a></li>
+        <li><a href="#architecture">High-Level Architecture</a></li>
+        <li><a href="#workflow">Core Workflow</a></li>
+        <li><a href="#bcasl">The Plugin Orchestrator (BCASL)</a></li>
+        <li><a href="#api-sdk">API_SDK — Plugin Development Kit</a></li>
+        <li><a href="#config">Configuration — bcasl.*</a></li>
+        <li><a href="#builtins">Built-in Plugins</a></li>
+        <li><a href="#engines">Engine Plugins</a></li>
+        <li><a href="#gui">GUI — Developer Experience</a></li>
+        <li><a href="#env">Automated env & deps</a></li>
+        <li><a href="#security">Security & Compliance</a></li>
+        <li><a href="#performance">Performance & Robustness</a></li>
+        <li><a href="#extensibility">Extensibility</a></li>
+        <li><a href="#testing">Testing & CI</a></li>
+        <li><a href="#roadmap">Roadmap Ideas</a></li>
+        <li><a href="#glossary">Glossary</a></li>
+        <li><a href="#why">Why PyCompiler ARK++</a></li>
+      </ul>
+    </nav>
+
+    <main id="main" class="article" role="main">
+      <section id="overview">
+        <h1>Product Overview and Technical Deep Dive</h1>
+        <div class="meta">
+          <div>Version: <strong>3.0.0</strong> (PyCompiler ARK++ — Advanced Runtime Kit)</div>
+          <div>Author: <strong>Samuel Amen Ague</strong></div>
+          <div>License: <strong>GPL-3.0-only</strong></div>
+        </div>
+        <p>
+          PyCompiler ARK++ is a modern, extensible pre-compilation and packaging platform designed to prepare projects before build, orchestrate pre-build actions, and invoke compilation engines (PyInstaller, Nuitka, or external vendors). It provides a robust plugin system, a comprehensive SDK for plugin authors, a flexible engine plugin model, and a GUI workflow to streamline packaging pipelines across platforms.
+        </p>
+        <div class="notice">
+          It is a framework intended for Python compilation (ARK = Advanced Runtime Kit), providing structured, extensible building blocks for packaging and build orchestration.
+        </div>
+      </section>
+
+      <section id="vision">
+        <h2>Vision and the "Revolution"</h2>
+        <ul>
+          <li>Unify pre-compilation logic in one place (BCASL) — transparent, modular, testable.</li>
+          <li>Provide a stable SDK (API_SDK) so authors write plugins once with consistent utilities.</li>
+          <li>Support both Python-based and sandboxed binary engines (JSON manifest + QProcess).</li>
+          <li>Make the GUI a first-class citizen: workspace selection, venv management, builds, logs, l10n/i18n.</li>
+        </ul>
+      </section>
+
+      <section id="architecture">
+        <h2>High-Level Architecture</h2>
+        <h3>GUI (utils/worker.py)</h3>
+        <ul>
+          <li>Workspace selection, files collection, options preview, build triggers.</li>
+          <li>Venv management and tool installation with progress dialogs.</li>
+          <li>Internationalization, theme support, cross-platform UX.</li>
+        </ul>
+        <h3>Pre-compilation Orchestrator (BCASL: bcasl/bcasl.py)</h3>
+        <ul>
+          <li>Discovers, registers, orders, and executes plugins under <code>API/</code>.</li>
+          <li>Isolation per plugin with error handling; stable ordering (deps + priority).</li>
+          <li>Each plugin package exports <code>bcasl_register(manager)</code>.</li>
+        </ul>
+        <h3>Plugin SDK (API_SDK)</h3>
+        <ul>
+          <li>Stable API for plugin authors with utilities (config, logs, dialogs, FS helpers, elevation, progress).</li>
+          <li>Workspace resolved from GUI selection; no unsafe implicit fallbacks.</li>
+        </ul>
+        <h3>Engine Plugins</h3>
+        <ul>
+          <li>Python-based engines via the engine SDK, or binary engines via <code>engine.json</code>.</li>
+          <li>QProcess with <code>shell=False</code>, JSON payload I/O; portable and safe.</li>
+        </ul>
+      </section>
+
+      <section id="workflow">
+        <h2>Core Workflow</h2>
+        <ol>
+          <li>User selects a workspace in the GUI.</li>
+          <li>BCASL loads plugin packages under <code>API/</code> and registers them.</li>
+          <li>BCASL executes each plugin’s <code>on_pre_compile(ctx)</code> (dependency + priority order).</li>
+          <li>Plugins access config, log to UI/console, prompt users, iterate files safely.</li>
+          <li>GUI triggers the selected engine to build the project with logs and progress.</li>
+        </ol>
+      </section>
+
+      <section id="bcasl">
+        <h2>The Plugin Orchestrator (BCASL)</h2>
+        <ul>
+          <li><strong>Identification:</strong> plugins carry id, name, version, description, author.</li>
+          <li><strong>Registration:</strong> <code>API/&lt;plugin_id&gt;/__init__.py</code> defines <code>bcasl_register(manager)</code>.</li>
+          <li><strong>Isolation:</strong> exceptions are trapped; contribute to a final execution report.</li>
+          <li><strong>Ordering:</strong> dependency-aware + priority; stable, predictable.</li>
+        </ul>
+      </section>
+
+      <section id="api-sdk">
+        <h2>API_SDK — The Plugin Development Kit</h2>
+        <ul>
+          <li><strong>Workspace resolution:</strong> from GUI selection; otherwise explicit context; no silent fallback.</li>
+          <li><strong>SDKContext:</strong> logs (<code>log_info/warn/error</code>), dialogs, file helpers, <code>config_view</code>, elevation, progress.</li>
+          <li><strong>Scaffolding:</strong> <code>scaffold_plugin(target_dir, plugin_id)</code> to bootstrap a plugin.</li>
+          <li><strong>Re-exports:</strong> PluginBase, PluginMeta, PreCompileContext; decorators like <code>plugin</code>, <code>wrap_context</code>.</li>
+        </ul>
+      </section>
+
+      <section id="config">
+        <h2>Configuration — bcasl.* (JSON/YAML/TOML/INI/CFG)</h2>
+        <ul>
+          <li><strong>Location:</strong> workspace root (e.g., <code>bcasl.json</code>, <code>.bcasl.yaml</code>).</li>
+          <li><strong>Global keys:</strong> <code>required_files</code>, <code>file_patterns</code>, <code>exclude_patterns</code>, <code>engine_id</code>.</li>
+          <li><strong>Per-plugin:</strong> <code>plugins.&lt;plugin_id&gt;.&lt;key&gt;</code> via <code>config_view.for_plugin(plugin_id)</code>.</li>
+        </ul>
+        <h3>Example (bcasl.json)</h3>
+        <pre><code>{
+  "file_patterns": ["src/**/*.py"],
+  "exclude_patterns": [
+    "**/__pycache__/**",
+    "build/**",
+    "dist/**",
+    "venv/**",
+    "main.build/**",
+    ".git/**",
+    ".vscode/**",
+    ".idea/**"
+  ],
+  "required_files": ["main.py", "pyproject.toml"]
+}</code></pre>
+      </section>
+
+      <section id="builtins">
+        <h2>Built-in Plugins (API/)</h2>
+        <h3>presence_check</h3>
+        <ul>
+          <li>Validates required files early (glob, readability, safe paths, configurable ignores).</li>
+          <li>UX: progress bar per file; detailed exceptions on failure.</li>
+        </ul>
+        <h3>header_injector</h3>
+        <ul>
+          <li>Prepends standardized headers to target files if missing; prevents duplication.</li>
+          <li>Configurable <code>file_patterns</code>, <code>exclude</code>; safe read/write with progress.</li>
+        </ul>
+        <h3>cleaner</h3>
+        <ul>
+          <li>Removes <code>.pyc</code> and <code>__pycache__/</code> for a clean state (with confirmation).</li>
+          <li>Respects global and per-plugin excludes; ignores <code>venv/**</code> by default.</li>
+        </ul>
+        <h3>demo_sdk_usage</h3>
+        <ul>
+          <li>Showcases SDK features end-to-end; includes elevation flow demo (safe, non-destructive).</li>
+          <li>Warns on broad scans without <code>file_patterns</code>.</li>
+        </ul>
+      </section>
+
+      <section id="engines">
+        <h2>Engine Plugins (engine_plugins/)</h2>
+        <p>Two supported forms:</p>
+        <ol>
+          <li><strong>Python-based engines</strong> via <code>CompilerEngine</code> (self-registering on import).</li>
+          <li><strong>Binary engines</strong> declared with <code>engine.json</code> and executed via QProcess.</li>
+        </ol>
+        <h3>Configuration semantics (engine.json)</h3>
+        <ul>
+          <li><code>arg_style</code>: <code>config_file</code> (recommended) or <code>json_arg</code></li>
+          <li><code>config_key</code>: name for the config argument (default: <code>--config</code>)</li>
+          <li><code>env</code>: environment variables to inject (QProcess, no shell)</li>
+        </ul>
+        <h3>Auto-args and mapping</h3>
+        <ul>
+          <li>Unified API computes auto options; engines can query per engine id.</li>
+          <li>Dependency-aware mapping priority: engine_plugins mapping.json → built-in fallback → env variable.</li>
+        </ul>
+        <div class="notice">Safety: QProcess with <code>shell=false</code>. Strict JSON I/O. Portable across platforms.</div>
+      </section>
+
+      <section id="gui">
+        <h2>GUI (utils/worker.py) — Developer Experience</h2>
+        <ul>
+          <li>Workspace selection, drag & drop, venv manager, install tools with progress.</li>
+          <li>Localization (EN/FR), themes, persistent preferences.</li>
+          <li>Open dist folders, export/import build options, tooltips and logs.</li>
+        </ul>
+      </section>
+
+      <section id="env">
+        <h2>Automated environment and dependency management</h2>
+        <h3>Interpreter discovery and venv creation</h3>
+        <ul>
+          <li>Creates <code>venv/</code> if missing; logs chosen interpreter (embedded, system, or <code>sys.executable</code>).</li>
+          <li>QProcess-based operations with progress (non-blocking UI).</li>
+        </ul>
+        <h3>Tool bootstrap</h3>
+        <ul>
+          <li>Installs PyInstaller first, then Nuitka into the same venv, with live logs.</li>
+        </ul>
+        <h3>Requirements installation</h3>
+        <ul>
+          <li>Detects <code>requirements.txt</code>; proposes or auto-installs deps with progress.</li>
+        </ul>
+        <h3>Dependency analysis (optional)</h3>
+        <ul>
+          <li>Suggests missing packages; can auto-install sequentially with robust error handling.</li>
+        </ul>
+        <h3>Manual venv selection & persistence</h3>
+        <ul>
+          <li>Pick an existing venv; preferences persist across sessions.</li>
+        </ul>
+        <h3>Safety and UX guarantees</h3>
+        <ul>
+          <li>No shell injection (QProcess); non-blocking progress; secret-safe flows.</li>
+        </ul>
+      </section>
+
+      <section id="security">
+        <h2>Security and Compliance</h2>
+        <ul>
+          <li>Never logs secrets. Sudo/UAC handled via safe flows.</li>
+          <li>Engines run without shell; strict argument passing; out-of-workspace paths disallowed by validators.</li>
+        </ul>
+      </section>
+
+      <section id="performance">
+        <h2>Performance and Robustness</h2>
+        <ul>
+          <li>Encourages narrow <code>file_patterns</code> and comprehensive <code>exclude_patterns</code>.</li>
+          <li>Concise, actionable logs; progress bars with determinate/indeterminate modes.</li>
+          <li>Engine layer can infer/display progress from stdout markers.</li>
+        </ul>
+      </section>
+
+      <section id="extensibility">
+        <h2>Extensibility</h2>
+        <h3>Add a new plugin</h3>
+        <ol>
+          <li>Scaffold: <code>scaffold_plugin("./API", "my_plugin")</code></li>
+          <li>Implement <code>on_pre_compile</code> with <code>wrap_context</code>, logs, and config.</li>
+          <li>Register with <code>bcasl_register(manager)</code>.</li>
+        </ol>
+        <h3>Add a new engine</h3>
+        <ul>
+          <li>Python: <code>engine_plugins/&lt;id&gt;/engine.py</code> with a <code>CompilerEngine</code> subclass.</li>
+          <li>Binary: <code>engine_plugins/&lt;id&gt;/engine.json</code> and a CLI that reads JSON and returns exit codes.</li>
+        </ul>
+        <p>Distribute plugins/engines as packages or repos; document dependencies.</p>
+      </section>
+
+      <section id="testing">
+        <h2>Testing and CI</h2>
+        <ul>
+          <li>Unit-test plugin logic with minimal contexts (mocked <code>workspace_root</code> and <code>log_fn</code>).</li>
+          <li>Validate <code>engine.json</code> with JSON Schema; run engine CLI with sample payload and assert exit code/output.</li>
+        </ul>
+        <h3>Example config and run</h3>
+        <pre><code>{
+  "engine_id": "echo_cli",
+  "engine_name": "Echo CLI Demo",
+  "entry_file": "/abs/path/app.py",
+  "workspace": "/abs/path/project",
+  "options": {"output_dir": null}
+}
+</code></pre>
+        <p>Run:</p>
+        <pre><code>./engine_plugins/echo_cli/bin/echo_engine.py --config ./config.json --include-pil --jinja
+# Exit codes: 0 = success; 2 = validation error
+</code></pre>
+      </section>
+
+      <section id="roadmap">
+        <h2>Roadmap Ideas (illustrative)</h2>
+        <ul>
+          <li>Richer engine SDK callbacks (preflight diagnostics, structured progress messages).</li>
+          <li>Additional built-in plugins (license audit, SBOM generation, artifact signing).</li>
+          <li>Config schema validation and typed config accessors.</li>
+          <li>Extended i18n resources and theming support.</li>
+        </ul>
+      </section>
+
+      <section id="glossary">
+        <h2>Glossary</h2>
+        <ul>
+          <li><strong>Plugin:</strong> Python package under <code>API/</code> exposing a <code>PluginBase</code> subclass and <code>on_pre_compile</code>.</li>
+          <li><strong>BCASL:</strong> orchestrator that loads and runs plugins before compilation.</li>
+          <li><strong>API_SDK:</strong> stable SDK for plugin authors; re-exports BCASL types and utilities.</li>
+          <li><strong>Engine plugin:</strong> Python engine (SDK) or a binary engine (<code>engine.json</code>).</li>
+          <li><strong>ConfigView:</strong> in-memory view over workspace configuration (<code>bcasl.*</code>).</li>
+          <li><strong>ProgressHandle:</strong> abstraction for progress (Qt dialog or console).</li>
+        </ul>
+      </section>
+
+      <section id="why">
+        <h2>Why PyCompiler ARK++</h2>
+        <p>
+          PyCompiler ARK++ delivers a cohesive, modular, and secure pre-compilation pipeline. It offers a clear extension model (plugins + engines), a battle-tested SDK centered on developer UX, cross-platform portability and security (UAC/sudo, no shell), and a GUI designed for productivity and transparency. Whether for internal tooling or community plugins, it provides the right primitives to keep packaging pipelines reliable and maintainable.
+        </p>
+      </section>
+    </main>
+  </div>
+
+  <footer class="page">
+    © 2025 PyCompiler Pro++ • Open source under GPL v3 — by <a href="https://github.com/raidos23" target="_blank" rel="noopener">raidos23</a>
+  </footer>
+</body>
+</html>
