@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="color-scheme" content="light dark" />
   <meta name="theme-color" content="#0b1e18" />
-  <title>PyCompiler Pro++ (ARK++) — Deep Dive</title>
+  <title>PyCompiler Pro++ (ARK++) — Deep Dive v3.1.0</title>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
   <style>
     /* High-tech green theme */
@@ -158,6 +158,7 @@
       <h3>Contents</h3>
       <ul>
         <li><a href="#overview">Overview</a></li>
+        <li><a href="#highlights">What's New (3.1.0)</a></li>
         <li><a href="#vision">Vision and the Revolution</a></li>
         <li><a href="#architecture">High-Level Architecture</a></li>
         <li><a href="#workflow">Core Workflow</a></li>
@@ -182,16 +183,32 @@
       <section id="overview">
         <h1>Product Overview and Technical Deep Dive</h1>
         <div class="meta">
-          <div>Version: <strong>3.0.0</strong> (PyCompiler ARK++ — Advanced Runtime Kit)</div>
+          <div>Version: <strong>3.1.0</strong> (PyCompiler ARK++ — Advanced Runtime Kit)</div>
           <div>Author: <strong>Samuel Amen Ague</strong></div>
           <div>License: <strong>GPL-3.0-only</strong></div>
         </div>
         <p>
-          PyCompiler ARK++ is a modern, extensible pre-compilation and packaging platform designed to prepare projects before build, orchestrate pre-build actions, and invoke compilation engines (PyInstaller, Nuitka, or external vendors). It provides a robust plugin system, a comprehensive SDK for plugin authors, a flexible engine plugin model, and a GUI workflow to streamline packaging pipelines across platforms.
+          PyCompiler ARK++ is a modern, extensible pre-compilation and packaging platform designed to prepare projects before build, orchestrate pre-build actions, and invoke compilation engines (e.g., PyInstaller, Nuitka, or external vendors). It combines a robust plugin system, a comprehensive SDK for plugin authors, a flexible engine plugin model, and a GUI workflow to streamline packaging pipelines across platforms. It is now a framework intended for Python compilation (ARK = Advanced Runtime Kit), providing structured, extensible building blocks for packaging and build orchestration.
         </p>
         <div class="notice">
-          It is a framework intended for Python compilation (ARK = Advanced Runtime Kit), providing structured, extensible building blocks for packaging and build orchestration.
+          This page summarizes the 3.1.0 platform design: safe, fast, and extensible.
         </div>
+      </section>
+
+      <section id="highlights">
+        <h2>What's New in 3.1.0</h2>
+        <ul>
+          <li>Non-blocking pre-compilation: BCASL plugins run in a background Qt thread; the UI stays responsive.</li>
+          <li>SDK progress enforcement: plugins must use <code>API_SDK.progress</code>; direct <code>QProgressDialog</code> is blocked in the sandbox.</li>
+          <li>External engine resolution: <code>engine.json</code> <code>program</code> resolves relative to the engine folder; demo uses <code>./bin/hello_engine.py</code>.</li>
+          <li>Dependencies: added <code>jsonschema</code> for optional manifest/config validation.</li>
+          <li><code>hello_json_arg</code> demo updated: ~15s simulated work; accepts auto flags (<code>--include-pil</code>, <code>--opencv</code>, <code>--jinja</code>, <code>--bundle-qt</code>).</li>
+          <li>Launch scripts (<code>run.sh</code>/<code>run.ps1</code>): flags for venv recreation and pip control; show app version; pass-through args.</li>
+          <li>OS dependencies automation: Linux (apt/dnf/pacman/zypper) and Windows (winget) via non-blocking progress; PyOxidizer & Nuitka preflight integrate with this flow.</li>
+          <li>Preferences directory migrated to hidden <code>.pref/</code> (auto-migrated from <code>pref/</code>).</li>
+          <li>Engine SDK 3.1.0: lazy export of <code>SysDependencyManager</code> to avoid unnecessary Qt imports.</li>
+          <li>Engine docs upgraded: production-grade READMEs for engines (hello_json_arg, PyInstaller, Nuitka, PyOxidizer, echo_cli).</li>
+        </ul>
       </section>
 
       <section id="vision">
@@ -209,7 +226,7 @@
         <h3>GUI (utils/worker.py)</h3>
         <ul>
           <li>Workspace selection, files collection, options preview, build triggers.</li>
-          <li>Venv management and tool installation with progress dialogs.</li>
+          <li>Venv management and tool installation (PyInstaller/Nuitka) with progress dialogs.</li>
           <li>Internationalization, theme support, cross-platform UX.</li>
         </ul>
         <h3>Pre-compilation Orchestrator (BCASL: bcasl/bcasl.py)</h3>
@@ -226,7 +243,7 @@
         <h3>Engine Plugins</h3>
         <ul>
           <li>Python-based engines via the engine SDK, or binary engines via <code>engine.json</code>.</li>
-          <li>QProcess with <code>shell=False</code>, JSON payload I/O; portable and safe.</li>
+          <li>QProcess with <code>shell=false</code>, JSON payload I/O; portable and safe.</li>
         </ul>
       </section>
 
@@ -249,6 +266,15 @@
           <li><strong>Isolation:</strong> exceptions are trapped; contribute to a final execution report.</li>
           <li><strong>Ordering:</strong> dependency-aware + priority; stable, predictable.</li>
         </ul>
+        <h3>Hardening highlights</h3>
+        <ul>
+          <li>Pre-compilation runs in a background Qt thread; UI remains responsive even if plugins do not show progress dialogs.</li>
+          <li>Sandbox processes start with the "spawn" method for stability on Linux/macOS/Windows when Qt is active.</li>
+          <li>Per-plugin timeout is configurable but clamped by the host; default and maximum are 20 seconds (cannot exceed 20s).</li>
+          <li>Interactivity defaults to interactive; headless environments switch to non-interactive automatically, with opt-in UI per plugin run if authorized.</li>
+          <li>Offscreen Qt is opt-in only; never forced by default.</li>
+          <li>Optional POSIX limits for sandboxed plugins via <code>bcasl.options.plugin_limits</code> (mem/cpu/open files/file size).</li>
+        </ul>
       </section>
 
       <section id="api-sdk">
@@ -256,6 +282,8 @@
         <ul>
           <li><strong>Workspace resolution:</strong> from GUI selection; otherwise explicit context; no silent fallback.</li>
           <li><strong>SDKContext:</strong> logs (<code>log_info/warn/error</code>), dialogs, file helpers, <code>config_view</code>, elevation, progress.</li>
+          <li><strong>Progress policy:</strong> plugins must use <code>API_SDK.progress</code>; direct <code>QProgressDialog</code> is blocked in the sandbox.</li>
+          <li><strong>Subprocess:</strong> <code>run_command(cmd, timeout_s=60, cwd=None, env=None, shell=False)</code> runs commands with a sanitized environment and timeouts.</li>
           <li><strong>Scaffolding:</strong> <code>scaffold_plugin(target_dir, plugin_id)</code> to bootstrap a plugin.</li>
           <li><strong>Re-exports:</strong> PluginBase, PluginMeta, PreCompileContext; decorators like <code>plugin</code>, <code>wrap_context</code>.</li>
         </ul>
@@ -265,9 +293,11 @@
         <h2>Configuration — bcasl.* (JSON/YAML/TOML/INI/CFG)</h2>
         <ul>
           <li><strong>Location:</strong> workspace root (e.g., <code>bcasl.json</code>, <code>.bcasl.yaml</code>).</li>
-          <li><strong>Global keys:</strong> <code>required_files</code>, <code>file_patterns</code>, <code>exclude_patterns</code>, <code>engine_id</code>.</li>
+          <li><strong>Global keys:</strong> <code>required_files</code>, <code>file_patterns</code>, <code>exclude_patterns</code>, <code>engine_id</code>, <code>options.plugin_timeout_s</code>, <code>options.plugin_limits</code>.</li>
           <li><strong>Per-plugin:</strong> <code>plugins.&lt;plugin_id&gt;.&lt;key&gt;</code> via <code>config_view.for_plugin(plugin_id)</code>.</li>
         </ul>
+        <h3>Default generation</h3>
+        <p>When no config exists, the host creates a minimal <code>bcasl.json</code> with strong defaults (common excludes and <code>options.plugin_timeout_s = 20.0</code>).</p>
         <h3>Example (bcasl.json)</h3>
         <pre><code>{
   "file_patterns": ["src/**/*.py"],
@@ -281,7 +311,8 @@
     ".vscode/**",
     ".idea/**"
   ],
-  "required_files": ["main.py", "pyproject.toml"]
+  "required_files": ["main.py", "pyproject.toml"],
+  "options": {"plugin_timeout_s": 20.0}
 }</code></pre>
       </section>
 
@@ -289,18 +320,18 @@
         <h2>Built-in Plugins (API/)</h2>
         <h3>presence_check</h3>
         <ul>
-          <li>Validates required files early (glob, readability, safe paths, configurable ignores).</li>
-          <li>UX: progress bar per file; detailed exceptions on failure.</li>
+          <li>Validates required files early (glob, readability, safe paths, configurable ignores via <code>ignore_missing_ok</code>).</li>
+          <li>UX: progress bar per file; detailed exceptions listing missing paths.</li>
         </ul>
         <h3>header_injector</h3>
         <ul>
-          <li>Prepends standardized headers to target files if missing; prevents duplication.</li>
+          <li>Prepends standardized headers to target files if missing; prevents duplication via boundary markers.</li>
           <li>Configurable <code>file_patterns</code>, <code>exclude</code>; safe read/write with progress.</li>
         </ul>
         <h3>cleaner</h3>
         <ul>
-          <li>Removes <code>.pyc</code> and <code>__pycache__/</code> for a clean state (with confirmation).</li>
-          <li>Respects global and per-plugin excludes; ignores <code>venv/**</code> by default.</li>
+          <li>Removes real <code>.pyc</code> and <code>__pycache__/</code> for a clean state (with confirmation).</li>
+          <li>Respects global excludes and per-plugin excludes; ignores <code>venv/**</code> by default (overridable).</li>
         </ul>
         <h3>demo_sdk_usage</h3>
         <ul>
@@ -322,11 +353,21 @@
           <li><code>config_key</code>: name for the config argument (default: <code>--config</code>)</li>
           <li><code>env</code>: environment variables to inject (QProcess, no shell)</li>
         </ul>
+        <h3>Program resolution</h3>
+        <p>The <code>program</code> field in <code>engine.json</code> is resolved relative to the engine plugin folder. Prefer <code>./bin/hello_engine.py</code> with empty <code>args</code> to avoid workspace-relative mistakes.</p>
         <h3>Auto-args and mapping</h3>
         <ul>
           <li>Unified API computes auto options; engines can query per engine id.</li>
-          <li>Dependency-aware mapping priority: engine_plugins mapping.json → built-in fallback → env variable.</li>
+          <li>Dependency-aware mapping priority: engine_plugins mapping.json → built-in fallback → environment variable.</li>
         </ul>
+        <pre><code>{
+  "Pillow": { "hello_json_arg": ["--include-pil"] },
+  "opencv-python": { "hello_json_arg": ["--opencv"] },
+  "opencv-contrib-python": { "hello_json_arg": ["--opencv"] },
+  "Jinja2": { "hello_json_arg": ["--jinja"] },
+  "PySide6": { "hello_json_arg": ["--bundle-qt"] },
+  "PyQt6": { "hello_json_arg": ["--bundle-qt"] }
+}</code></pre>
         <div class="notice">Safety: QProcess with <code>shell=false</code>. Strict JSON I/O. Portable across platforms.</div>
       </section>
 
@@ -360,7 +401,19 @@
         </ul>
         <h3>Manual venv selection & persistence</h3>
         <ul>
-          <li>Pick an existing venv; preferences persist across sessions.</li>
+          <li>Pick an existing venv; preferences persisted under hidden <code>.pref/</code> directory.</li>
+        </ul>
+        <h3>OS dependencies automation</h3>
+        <ul>
+          <li>Linux (apt/dnf/pacman/zypper) and Windows (winget), integrated into preflight with non-blocking progress.</li>
+        </ul>
+        <h3>Venv validation (strict mode)</h3>
+        <ul>
+          <li>A selected venv must contain <code>pyvenv.cfg</code>, platform-appropriate <code>Scripts/</code> or <code>bin/</code>, and the Python executable inside it.</li>
+          <li><code>include-system-site-packages</code> must be <code>false</code> in <code>pyvenv.cfg</code>; misconfigured venvs are rejected.</li>
+          <li>Realpath confinement: critical paths must resolve within the venv (symlink escapes rejected).</li>
+          <li>Binding verification: the venv’s <code>python</code> and <code>pip</code> must report prefixes/sites under the venv.</li>
+          <li>While the GUI enforces strict venv validation, other APIs may still use system pip when appropriate.</li>
         </ul>
         <h3>Safety and UX guarantees</h3>
         <ul>
@@ -373,6 +426,9 @@
         <ul>
           <li>Never logs secrets. Sudo/UAC handled via safe flows.</li>
           <li>Engines run without shell; strict argument passing; out-of-workspace paths disallowed by validators.</li>
+          <li>Binary engine environment is minimal by default; opt-in passthrough via <code>PYCOMPILER_ENV_PASSTHROUGH</code>.</li>
+          <li>Preferences stored under hidden <code>.pref/</code> directory; avoid writing outside the workspace without explicit consent.</li>
+          <li>Plugins run with per-plugin timeouts and optional POSIX resource limits.</li>
         </ul>
       </section>
 
@@ -382,6 +438,7 @@
           <li>Encourages narrow <code>file_patterns</code> and comprehensive <code>exclude_patterns</code>.</li>
           <li>Concise, actionable logs; progress bars with determinate/indeterminate modes.</li>
           <li>Engine layer can infer/display progress from stdout markers.</li>
+          <li>Host stability: Wayland fractional scaling workaround enabled; High-DPI attributes configured before QApplication; macOS layer-backed rendering enabled; crash logs stored in platform-appropriate locations.</li>
         </ul>
       </section>
 
